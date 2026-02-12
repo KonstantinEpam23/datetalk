@@ -1,0 +1,44 @@
+import { DateTime } from "luxon";
+
+export type Ast = DateTimeExpr;
+
+export interface DateTimeExpr {
+  type: "DateTimeExpr";
+  head: Primary;
+  steps: Step[];
+}
+
+export type Primary =
+  | { type: "Now" }
+  | { type: "Today" }
+  | { type: "Literal"; kind: "string"; value: string }
+  | DateTimeExpr; // parentheses return Expr directly
+
+export type Step = AddStep | InTzStep;
+
+export interface AddStep {
+  type: "Add";
+  duration: DurationNode;
+}
+
+export interface InTzStep {
+  type: "InTZ";
+  tz: string;
+}
+
+export interface DurationNode {
+  type: "Duration";
+  parts: DurationPartNode[];
+}
+
+export interface DurationPartNode {
+  type: "DurationPart";
+  value: number;
+  unit: "ms" | "s" | "m" | "h" | "d" | "w";
+}
+
+export type Value = { type: "DateTime"; value: DateTime };
+
+export function assertNever(x: never): never {
+  throw new Error(`Unexpected: ${JSON.stringify(x)}`);
+}
