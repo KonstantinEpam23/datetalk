@@ -1,12 +1,14 @@
 {
   "name": "date-talk-simple",
   "version": "0.0.1",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "private": true,
   "type": "module",
   "scripts": {
     "build:parser": "peggy --format es --output src/parser.js src/grammar.pegjs",
     "build": "npm run build:parser && cp src/parser.js dist/parser.js && tsc -p tsconfig.json",
-    "dev": "npm run build:parser && node --enable-source-maps dist/index.js"
+    "dev": "node --enable-source-maps dist/index.js"
   },
   "dependencies": {
     "luxon": "^3.5.0"

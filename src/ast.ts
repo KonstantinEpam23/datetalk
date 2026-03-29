@@ -17,7 +17,7 @@ export type Primary =
 export type Step = AddStep | InTzStep;
 
 export interface AddStep {
-  type: "Add";
+  type: "AddSub";
   duration: DurationNode;
 }
 

@@ -51,7 +51,7 @@ function evalPrimary(p: Primary, zone?: string): DateTime {
 
 function applyStep(dt: DateTime, step: Step): DateTime {
   switch (step.type) {
-    case "Add":
+    case "AddSub":
       return dt.plus(durationToLuxon(step.duration));
 
     case "InTZ": {
