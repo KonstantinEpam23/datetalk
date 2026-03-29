@@ -8,7 +8,7 @@
   "scripts": {
     "build:parser": "peggy --format es --output src/parser.js src/grammar.pegjs",
     "build": "npm run build:parser && cp src/parser.js dist/parser.js && tsc -p tsconfig.json",
-    "dev": "node --enable-source-maps dist/index.js"
+    "dev": "node --enable-source-maps dist/cli.js"
   },
   "dependencies": {
     "luxon": "^3.5.0"
