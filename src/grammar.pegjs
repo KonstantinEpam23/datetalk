@@ -232,7 +232,7 @@ CompactDurationPart
     }
 
 CompactUnit
-  = u:("ms" / "s" / "m" / "h" / "d" / "w" / "mo" / "y") { return u; }
+  = u:("ms" / "s" / "mo" / "m" / "h" / "d" / "w" / "y") { return u; }
 
 WordyDurationPart
   = n:Int _ u:Unit {

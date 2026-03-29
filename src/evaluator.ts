@@ -51,8 +51,10 @@ function evalPrimary(p: Primary, zone?: string): DateTime {
 
 function applyStep(dt: DateTime, step: Step): DateTime {
   switch (step.type) {
-    case "AddSub":
-      return dt.plus(durationToLuxon(step.duration));
+    case "AddSub": {
+      const delta = durationToLuxon(step.duration);
+      return step.op === "-" ? dt.minus(delta) : dt.plus(delta);
+    }
 
     case "InTZ": {
       const next = dt.setZone(step.tz);
@@ -75,6 +77,8 @@ function durationToLuxon(d: DurationNode): Duration {
       case "h":  obj.hours        = (obj.hours ?? 0) + p.value; break;
       case "d":  obj.days         = (obj.days ?? 0) + p.value; break;
       case "w":  obj.weeks        = (obj.weeks ?? 0) + p.value; break;
+      case "mo": obj.months       = (obj.months ?? 0) + p.value; break;
+      case "y":  obj.years        = (obj.years ?? 0) + p.value; break;
       default:
         throw new Error(`Unsupported duration unit: ${p.unit}`);
     }

@@ -236,8 +236,8 @@ function peg$parse(input, options) {
   var peg$c58 = "roll";
   var peg$c59 = "strict";
   var peg$c60 = "ms";
-  var peg$c61 = "mo";
-  var peg$c62 = "y";
+  var peg$c61 = "s";
+  var peg$c62 = "mo";
   var peg$c63 = ":";
   var peg$c64 = "10";
   var peg$c65 = "11";
@@ -248,7 +248,7 @@ function peg$parse(input, options) {
   var peg$r0 = /^[a-zA-Z0-9_]/;
   var peg$r1 = /^[0-9]/;
   var peg$r2 = /^[+\-]/;
-  var peg$r3 = /^[dhmsw]/;
+  var peg$r3 = /^[dhmwy]/;
   var peg$r4 = /^[1-9]/;
 
   var peg$e0 = peg$literalExpectation(" ", false);
@@ -316,9 +316,9 @@ function peg$parse(input, options) {
   var peg$e62 = peg$literalExpectation("roll", false);
   var peg$e63 = peg$literalExpectation("strict", false);
   var peg$e64 = peg$literalExpectation("ms", false);
-  var peg$e65 = peg$classExpectation(["d", "h", "m", "s", "w"], false, false);
+  var peg$e65 = peg$literalExpectation("s", false);
   var peg$e66 = peg$literalExpectation("mo", false);
-  var peg$e67 = peg$literalExpectation("y", false);
+  var peg$e67 = peg$classExpectation(["d", "h", "m", "w", "y"], false, false);
   var peg$e68 = peg$literalExpectation(":", false);
   var peg$e69 = peg$literalExpectation("10", false);
   var peg$e70 = peg$literalExpectation("11", false);
@@ -2594,24 +2594,24 @@ function peg$parse(input, options) {
       if (peg$silentFails === 0) { peg$fail(peg$e64); }
     }
     if (s1 === peg$FAILED) {
-      s1 = input.charAt(peg$currPos);
-      if (peg$r3.test(s1)) {
+      if (input.charCodeAt(peg$currPos) === 115) {
+        s1 = peg$c61;
         peg$currPos++;
       } else {
         s1 = peg$FAILED;
         if (peg$silentFails === 0) { peg$fail(peg$e65); }
       }
       if (s1 === peg$FAILED) {
-        if (input.substr(peg$currPos, 2) === peg$c61) {
-          s1 = peg$c61;
+        if (input.substr(peg$currPos, 2) === peg$c62) {
+          s1 = peg$c62;
           peg$currPos += 2;
         } else {
           s1 = peg$FAILED;
           if (peg$silentFails === 0) { peg$fail(peg$e66); }
         }
         if (s1 === peg$FAILED) {
-          if (input.charCodeAt(peg$currPos) === 121) {
-            s1 = peg$c62;
+          s1 = input.charAt(peg$currPos);
+          if (peg$r3.test(s1)) {
             peg$currPos++;
           } else {
             s1 = peg$FAILED;

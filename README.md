@@ -139,14 +139,14 @@ Supported in both quote styles:
 Current evaluator implementation (see [src/evaluator.ts](src/evaluator.ts)) supports:
 
 - Primaries: `now`, `today`, quoted string literal, parenthesized DateTime expressions
-- Steps: `+ <duration>`, `in "<IANA timezone>"`
+- Steps: `+/- <duration>`, `in "<IANA timezone>"`
 
 It does not yet evaluate parser nodes such as `tomorrow`, ranges, `start/end of`, `next/prev`, `at`, `using`, or `as`.
 
 ## Known gaps (parser vs evaluator)
 
-- [ ] `- <duration>` is parsed but currently behaves like `+ <duration>`.
-- [ ] Duration units `mo`/`y` (and wordy month/year) are parsed but not handled by evaluator.
+- [x] `- <duration>` is parsed and evaluated as subtraction.
+- [x] Duration units `mo`/`y` (and wordy month/year) are evaluated.
 - [ ] `DateRange` (`a .. b`) parsing exists; evaluator has no range value type yet.
 - [ ] `Within` (`x is within a..b`) parsing exists; evaluator has no boolean result type yet.
 - [ ] `RangeStart` / `RangeEnd` / `RangeDays` parsing exists; evaluator does not implement range helpers.

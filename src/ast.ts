@@ -18,6 +18,7 @@ export type Step = AddStep | InTzStep;
 
 export interface AddStep {
   type: "AddSub";
+  op: "+" | "-";
   duration: DurationNode;
 }
 
@@ -34,7 +35,7 @@ export interface DurationNode {
 export interface DurationPartNode {
   type: "DurationPart";
   value: number;
-  unit: "ms" | "s" | "m" | "h" | "d" | "w";
+  unit: "ms" | "s" | "m" | "h" | "d" | "w" | "mo" | "y";
 }
 
 export type Value = { type: "DateTime"; value: DateTime };
