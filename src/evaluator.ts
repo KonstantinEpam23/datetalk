@@ -11,7 +11,16 @@ export interface EvalOptions {
  * The grammar is minimal, so everything evaluates to DateTime.
  */
 export function evaluate(ast: Ast, opts: EvalOptions = {}): Value {
-  const dt = evalExpr(ast as DateTimeExpr, opts.defaultZone);
+  const expr = ast as DateTimeExpr;
+  const lastStep = expr.steps[expr.steps.length - 1];
+
+  if (lastStep?.type === "AsFormat") {
+    const exprWithoutFormat: DateTimeExpr = { ...expr, steps: expr.steps.slice(0, -1) };
+    const dt = evalExpr(exprWithoutFormat, opts.defaultZone);
+    return { type: "String", value: dt.toFormat(lastStep.format) };
+  }
+
+  const dt = evalExpr(expr, opts.defaultZone);
   return { type: "DateTime", value: dt };
 }
 
@@ -61,6 +70,9 @@ function applyStep(dt: DateTime, step: Step): DateTime {
       if (!next.isValid) throw new Error(`Invalid time zone: "${step.tz}"`);
       return next;
     }
+
+    case "AsFormat":
+      throw new Error(`"as" formatting must be the last step in an expression`);
 
     default:
       return assertNever(step as never);

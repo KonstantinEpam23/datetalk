@@ -14,7 +14,7 @@ export type Primary =
   | { type: "Literal"; kind: "string"; value: string }
   | DateTimeExpr; // parentheses return Expr directly
 
-export type Step = AddStep | InTzStep;
+export type Step = AddStep | InTzStep | AsFormatStep;
 
 export interface AddStep {
   type: "AddSub";
@@ -25,6 +25,11 @@ export interface AddStep {
 export interface InTzStep {
   type: "InTZ";
   tz: string;
+}
+
+export interface AsFormatStep {
+  type: "AsFormat";
+  format: string;
 }
 
 export interface DurationNode {
@@ -38,7 +43,9 @@ export interface DurationPartNode {
   unit: "ms" | "s" | "m" | "h" | "d" | "w" | "mo" | "y";
 }
 
-export type Value = { type: "DateTime"; value: DateTime };
+export type Value =
+  | { type: "DateTime"; value: DateTime }
+  | { type: "String"; value: string };
 
 export function assertNever(x: never): never {
   throw new Error(`Unexpected: ${JSON.stringify(x)}`);
