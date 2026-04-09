@@ -11,6 +11,8 @@ export interface DateTimeExpr {
 export type Primary =
   | { type: "Now" }
   | { type: "Today" }
+  | { type: "Tomorrow" }
+  | { type: "Yesterday" }
   | { type: "Literal"; kind: "string"; value: string }
   | DateTimeExpr; // parentheses return Expr directly
 

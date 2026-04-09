@@ -63,7 +63,9 @@ Any number of steps can follow a primary:
 
 Examples:
 
-- `now + 72h in "Europe/Belgrade"`
+- `now + 72h in Europe/Belgrade`
+- `now in Belarus`
+- `tomorrow in Minsk`
 - `today start of month`
 - `now next Monday at 09:30`
 - `"2026-01-28 14:30" - 90m as "yyyy-MM-dd HH:mm"`

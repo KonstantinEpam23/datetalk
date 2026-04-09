@@ -182,9 +182,26 @@ TimeZone
   / BareTimeZone
 
 BareTimeZone
+  = head:TimeZoneToken tail:(_ !TimeZoneStepBoundary part:TimeZoneToken { return part; })* {
+      return [head, ...tail].join(" ");
+    }
+
+TimeZoneToken
   = head:[A-Za-z_] tail:[A-Za-z0-9_+\/:-]* {
       return head + tail.join("");
     }
+
+TimeZoneStepBoundary
+  = "+"
+  / "-"
+  / "as" !IdentChar
+  / "start" !IdentChar
+  / "end" !IdentChar
+  / "next" !IdentChar
+  / "previous" !IdentChar
+  / "prev" !IdentChar
+  / "at" !IdentChar
+  / "using" !IdentChar
 
 WeekTarget
   = Weekday
