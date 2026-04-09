@@ -179,6 +179,12 @@ UsingMode
 
 TimeZone
   = StringLiteral
+  / BareTimeZone
+
+BareTimeZone
+  = head:[A-Za-z_] tail:[A-Za-z0-9_+\/:-]* {
+      return head + tail.join("");
+    }
 
 WeekTarget
   = Weekday

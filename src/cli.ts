@@ -7,8 +7,8 @@ const input = process.argv.slice(2).join(" ").trim();
 
 if (!input) {
 	console.log("Usage:");
-	console.log(`  npm run dev -- 'now + 72h in "Europe/Belgrade"'`);
-	console.log(`  npm run dev -- '"2026-01-28 14:30" + 90m in "UTC"'`);
+	console.log(`  npm run dev -- 'now + 72h in Europe/Belgrade'`);
+	console.log(`  npm run dev -- '"2026-01-28 14:30" + 90m in UTC'`);
 	process.exit(1);
 }
 

@@ -51,7 +51,7 @@ Any number of steps can follow a primary:
 
 - `+ <duration>`
 - `- <duration>`
-- `in "<IANA timezone>"`
+- `in <IANA timezone>` or `in "<IANA timezone>"`
 - `as "<format string>"`
 - `start of <unit>`
 - `end of <unit>`
