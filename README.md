@@ -32,8 +32,22 @@ Examples:
 - `today`
 - `tomorrow`
 - `yesterday`
+- Weekday name (case-insensitive): `Friday`, `next Friday`, `last friday`
+- Month name (case-insensitive): `April`, `next april`, `last December`
 - Parenthesized expression: `(Expr)`
 - Quoted string literal: `"..."` or `'...'`
+
+### Weekday resolution
+
+- `Friday` — nearest Friday (today if today is Friday, otherwise whichever direction is closer)
+- `next Friday` — the first Friday strictly after today
+- `last Friday` — the most recent Friday strictly before today
+
+### Month resolution
+
+- `April` — nearest April 1st (current month if it matches, otherwise whichever direction is closer)
+- `next April` — April 1st of the next occurrence strictly after this month
+- `last April` — April 1st of the most recent occurrence strictly before this month
 
 ## Steps (applied left-to-right)
 
@@ -56,6 +70,9 @@ Examples:
 - `now + 72h in Europe/Belgrade`
 - `now in Belarus`
 - `tomorrow in Minsk`
+- `Friday in Tokyo`
+- `next January + 5d`
+- `last march as "yyyy-MM-dd"`
 - `today start of month`
 - `now next Monday at 09:30`
 - `"2026-01-28 14:30" - 90m as "yyyy-MM-dd HH:mm"`
@@ -142,6 +159,8 @@ It does not yet evaluate parser nodes such as `start/end of`, `next/prev`, `at`,
 - [x] `tomorrow` / `yesterday` primaries are evaluated.
 - [x] `AsFormat` (`as "..."`) is evaluated.
 - [x] `RelativeAmount` (`days until/since <expr>`) is evaluated.
+- [x] Weekday primaries (`Friday`, `next Friday`, `last Friday`) are evaluated.
+- [x] Month primaries (`April`, `next April`, `last April`) are evaluated.
 - [ ] `Boundary` (`start of <unit>`, `end of <unit>`) parsing exists; evaluator does not implement it.
 - [ ] `NextPrev` (`next/previous/prev <target>`) parsing exists; evaluator does not implement it.
 - [ ] `AtTime` (`at HH:MM...`) parsing exists; evaluator does not implement it.

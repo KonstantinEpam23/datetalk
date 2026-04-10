@@ -17,10 +17,10 @@ _         = " "*
 
 IdentChar = [a-zA-Z0-9_]
 
-Int
+Int "integer"
   = digits:[0-9]+ { return parseInt(digits.join(""), 10); }
 
-TwoDigits
+TwoDigits "two-digit number"
   = d:[0-9][0-9] { return d.join(""); }
 
 /* =========================
@@ -58,7 +58,7 @@ RelativeAmountExpr
       return node("RelativeAmount", { unit: u.norm, direction: dir, target });
     }
 
-DateTimeExpr
+DateTimeExpr "date/time expression"
   = head:Primary tail:(_ Step)* {
       const steps = tail.map(t => t[1]);
       return node("DateTimeExpr", { head, steps });
@@ -68,11 +68,13 @@ DateTimeExpr
  * Primary values
  * ========================= */
 
-Primary
+Primary "primary date/time value"
   = Now
   / Today
   / Tomorrow
   / Yesterday
+  / WeekdayPrimary
+  / MonthPrimary
   / Parens
   / s:StringLiteral { return node("Literal", { kind: "string", value: s }); }
 
@@ -91,11 +93,50 @@ Tomorrow
 Yesterday
   = "yesterday" !IdentChar { return node("Yesterday", {}); }
 
+WeekdayPrimary
+  = dir:("next"i / "last"i) !IdentChar _ w:WeekdayNameCI !IdentChar {
+      return node("WeekdayRef", { name: w, direction: dir.toLowerCase() });
+    }
+  / w:WeekdayNameCI !IdentChar {
+      return node("WeekdayRef", { name: w, direction: "nearest" });
+    }
+
+MonthPrimary
+  = dir:("next"i / "last"i) !IdentChar _ m:MonthNameCI !IdentChar {
+      return node("MonthRef", { name: m, direction: dir.toLowerCase() });
+    }
+  / m:MonthNameCI !IdentChar {
+      return node("MonthRef", { name: m, direction: "nearest" });
+    }
+
+WeekdayNameCI "weekday name"
+  = "monday"i    { return "Monday"; }
+  / "tuesday"i   { return "Tuesday"; }
+  / "wednesday"i { return "Wednesday"; }
+  / "thursday"i  { return "Thursday"; }
+  / "friday"i    { return "Friday"; }
+  / "saturday"i  { return "Saturday"; }
+  / "sunday"i    { return "Sunday"; }
+
+MonthNameCI "month name"
+  = "january"i   { return "January"; }
+  / "february"i  { return "February"; }
+  / "march"i     { return "March"; }
+  / "april"i     { return "April"; }
+  / "may"i       { return "May"; }
+  / "june"i      { return "June"; }
+  / "july"i      { return "July"; }
+  / "august"i    { return "August"; }
+  / "september"i { return "September"; }
+  / "october"i   { return "October"; }
+  / "november"i  { return "November"; }
+  / "december"i  { return "December"; }
+
 /* =========================
  * Steps (DateTime transforms)
  * ========================= */
 
-Step
+Step "date/time transformation step"
   = AddSub
   / InTZ
   / AsFormat
@@ -117,6 +158,9 @@ InTZ
 AsFormat
   = "as" !IdentChar _ fmt:StringLiteral {
       return node("AsFormat", { format: fmt });
+    }
+  / "as" !IdentChar _ "weekday" !IdentChar {
+      return node("AsFormat", { format: "EEEE" });
     }
 
 StartEndOf
@@ -143,7 +187,7 @@ UsingMode
  * Atoms
  * ========================= */
 
-TimeZone
+TimeZone "time zone"
   = StringLiteral
   / BareTimeZone
 
@@ -171,12 +215,12 @@ TimeZoneStepBoundary
   / "until" !IdentChar
   / "since" !IdentChar
 
-WeekTarget
+WeekTarget "week target"
   = Weekday
   / "weekday" !IdentChar { return node("WeekTarget", { kind: "weekday" }); }
   / "weekend" !IdentChar { return node("WeekTarget", { kind: "weekend" }); }
 
-Weekday
+Weekday "weekday name"
   = w:(
       "Monday" / "Tuesday" / "Wednesday" / "Thursday" / "Friday" / "Saturday" / "Sunday" /
       "Mon" / "Tue" / "Wed" / "Thu" / "Fri" / "Sat" / "Sun"
@@ -184,7 +228,7 @@ Weekday
       return node("WeekTarget", { kind: "weekdayName", value: w });
     }
 
-Unit
+Unit "unit of time"
   = u:(
       "milliseconds" / "millisecond" /
       "seconds" / "second" / "minutes" / "minute" / "hours" / "hour" /
@@ -210,12 +254,12 @@ Mode
  * Durations
  * ========================= */
 
-Duration
+Duration "duration"
   = first:DurationPart rest:(_ DurationPart)* {
       return node("Duration", { parts: [first, ...rest.map(x => x[1])] });
     }
 
-DurationPart
+DurationPart "duration part"
   = CompactDurationPart
   / WordyDurationPart
 
@@ -236,7 +280,7 @@ WordyDurationPart
  * Time literal (24h + 12h)
  * ========================= */
 
-TimeLiteral
+TimeLiteral "time"
   = Time12
   / Time24
 

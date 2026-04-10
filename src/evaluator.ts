@@ -1,4 +1,4 @@
-import { DateTime, Duration } from "luxon";
+import { DateTime, Duration, Info } from "luxon";
 import type { Ast, DateTimeExpr, Primary, Step, DurationNode, RelativeAmountExpr, Value } from "./ast.js";
 import { assertNever } from "./utils/assert-never.js";
 import { nowInZone, resolveTimeZone } from "./utils/timezone.js";
@@ -61,6 +61,12 @@ function evalPrimary(p: Primary, zone?: string): DateTime {
     case "Yesterday":
       return nowInZone(zone).minus({ days: 1 }).startOf("day");
 
+    case "WeekdayRef":
+      return resolveWeekdayRef(p.name, p.direction, zone);
+
+    case "MonthRef":
+      return resolveMonthRef(p.name, p.direction, zone);
+
     case "Literal": {
       const parsed = parseDateString(p.value, zone);
       if (!parsed.isValid) {
@@ -116,6 +122,65 @@ function durationToLuxon(d: DurationNode): Duration {
     }
   }
   return Duration.fromObject(obj);
+}
+
+const WEEKDAY_INDEX: Record<string, number> = {
+  Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4,
+  Friday: 5, Saturday: 6, Sunday: 7,
+};
+
+function resolveWeekdayRef(name: string, direction: "next" | "last" | "nearest", zone?: string): DateTime {
+  const today = nowInZone(zone).startOf("day");
+  const todayDow = today.weekday; // 1=Mon .. 7=Sun
+  const targetDow = WEEKDAY_INDEX[name];
+  if (!targetDow) throw new Error(`Unknown weekday: "${name}"`);
+
+  const daysAhead = ((targetDow - todayDow) % 7 + 7) % 7;
+  const daysBehind = ((todayDow - targetDow) % 7 + 7) % 7;
+
+  switch (direction) {
+    case "next":
+      return today.plus({ days: daysAhead === 0 ? 7 : daysAhead });
+    case "last":
+      return today.minus({ days: daysBehind === 0 ? 7 : daysBehind });
+    case "nearest":
+      // today counts as "nearest"
+      if (daysAhead === 0) return today;
+      return daysAhead <= 3 ? today.plus({ days: daysAhead }) : today.minus({ days: daysBehind });
+  }
+}
+
+const MONTH_INDEX: Record<string, number> = {
+  January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+  July: 7, August: 8, September: 9, October: 10, November: 11, December: 12,
+};
+
+function resolveMonthRef(name: string, direction: "next" | "last" | "nearest", zone?: string): DateTime {
+  const today = nowInZone(zone).startOf("day");
+  const currentMonth = today.month; // 1–12
+  const targetMonth = MONTH_INDEX[name];
+  if (!targetMonth) throw new Error(`Unknown month: "${name}"`);
+
+  const monthsAhead = ((targetMonth - currentMonth) % 12 + 12) % 12;
+  const monthsBehind = ((currentMonth - targetMonth) % 12 + 12) % 12;
+
+  let result: DateTime;
+  switch (direction) {
+    case "next":
+      result = today.plus({ months: monthsAhead === 0 ? 12 : monthsAhead });
+      break;
+    case "last":
+      result = today.minus({ months: monthsBehind === 0 ? 12 : monthsBehind });
+      break;
+    case "nearest":
+      if (monthsAhead === 0) {
+        result = today;
+      } else {
+        result = monthsAhead <= 6 ? today.plus({ months: monthsAhead }) : today.minus({ months: monthsBehind });
+      }
+      break;
+  }
+  return result.set({ day: 1 }).startOf("day");
 }
 
 

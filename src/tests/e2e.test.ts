@@ -206,6 +206,117 @@ test("e2e: '(now + 2h) in Tokyo' parenthesized expression", () => {
   assert.equal(result.value.toISO(), "2026-04-10T23:00:00.000+09:00");
 });
 
+// ── Weekday primaries ────────────────────────────────────────────
+// Stubbed now = 2026-04-10 (Friday)
+
+test("e2e: 'friday' (nearest) returns today since today is Friday", () => {
+  const result = evaluate(parse("friday"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-10T00:00:00.000Z");
+});
+
+test("e2e: 'FRIDAY' is case-insensitive", () => {
+  const result = evaluate(parse("FRIDAY"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-10T00:00:00.000Z");
+});
+
+test("e2e: 'next friday' returns next week's Friday", () => {
+  const result = evaluate(parse("next friday"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-17T00:00:00.000Z");
+});
+
+test("e2e: 'last friday' returns last week's Friday", () => {
+  const result = evaluate(parse("last friday"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-03T00:00:00.000Z");
+});
+
+test("e2e: 'monday' (nearest) returns next Monday (3 days away)", () => {
+  // Friday→Monday: 3 days ahead vs 4 days behind → ahead wins
+  const result = evaluate(parse("monday"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-13T00:00:00.000Z");
+});
+
+test("e2e: 'wednesday' (nearest) returns last Wednesday (2 days behind)", () => {
+  // Friday→Wednesday: 5 days ahead vs 2 days behind → behind wins
+  const result = evaluate(parse("wednesday"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-08T00:00:00.000Z");
+});
+
+test("e2e: 'next monday in Tokyo' weekday with timezone step", () => {
+  const result = evaluate(parse("next monday in Tokyo"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.zoneName, "Asia/Tokyo");
+  assert.ok(result.value.toISO()!.startsWith("2026-04-13"));
+});
+
+test("e2e: 'days until next monday'", () => {
+  const result = evaluate(parse("days until next monday"), { defaultZone: "UTC" });
+  assert.deepEqual(result, { type: "Number", value: 3 });
+});
+
+// ── Month primaries ──────────────────────────────────────────────
+// Stubbed now = 2026-04-10 (April)
+
+test("e2e: 'april' (nearest) returns this April 1st", () => {
+  const result = evaluate(parse("april"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-01T00:00:00.000Z");
+});
+
+test("e2e: 'APRIL' is case-insensitive", () => {
+  const result = evaluate(parse("APRIL"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-01T00:00:00.000Z");
+});
+
+test("e2e: 'next january' returns January of next year", () => {
+  const result = evaluate(parse("next january"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2027-01-01T00:00:00.000Z");
+});
+
+test("e2e: 'last december' returns December of last year", () => {
+  const result = evaluate(parse("last december"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2025-12-01T00:00:00.000Z");
+});
+
+test("e2e: 'next april' skips current month, returns next year", () => {
+  const result = evaluate(parse("next april"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2027-04-01T00:00:00.000Z");
+});
+
+test("e2e: 'last april' skips current month, returns last year", () => {
+  const result = evaluate(parse("last april"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2025-04-01T00:00:00.000Z");
+});
+
+test("e2e: 'october' (nearest) returns upcoming October (6 months away)", () => {
+  // April→October: 6 months ahead vs 6 behind → ahead wins (tie-break)
+  const result = evaluate(parse("october"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-10-01T00:00:00.000Z");
+});
+
+test("e2e: 'february' (nearest) returns last February (2 months behind)", () => {
+  // April→February: 10 months ahead vs 2 behind → behind wins
+  const result = evaluate(parse("february"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-02-01T00:00:00.000Z");
+});
+
+test("e2e: 'last march as \"yyyy-MM-dd\"' month with format step", () => {
+  const result = evaluate(parse('last march as "yyyy-MM-dd"'), { defaultZone: "UTC" });
+  assert.deepEqual(result, { type: "String", value: "2026-03-01" });
+});
+
 // ── Restore real clock ───────────────────────────────────────────
 
 test("e2e: teardown restore clock", () => {
