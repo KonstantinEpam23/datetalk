@@ -1,11 +1,18 @@
 import { DateTime } from "luxon";
 
-export type Ast = DateTimeExpr;
+export type Ast = DateTimeExpr | RelativeAmountExpr;
 
 export interface DateTimeExpr {
   type: "DateTimeExpr";
   head: Primary;
   steps: Step[];
+}
+
+export interface RelativeAmountExpr {
+  type: "RelativeAmount";
+  unit: DurationPartNode["unit"];
+  direction: "until" | "since";
+  target: DateTimeExpr;
 }
 
 export type Primary =
@@ -47,7 +54,8 @@ export interface DurationPartNode {
 
 export type Value =
   | { type: "DateTime"; value: DateTime }
-  | { type: "String"; value: string };
+  | { type: "String"; value: string }
+  | { type: "Number"; value: number };
 
 export function assertNever(x: never): never {
   throw new Error(`Unexpected: ${JSON.stringify(x)}`);

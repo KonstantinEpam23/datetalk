@@ -54,6 +54,7 @@ SingleQuotedChar
 Expr
   = WithinExpr
   / RangeExpr
+  / RelativeAmountExpr
   / DateTimeExpr
 
 WithinExpr
@@ -64,6 +65,11 @@ WithinExpr
 RangeExpr
   = a:DateTimeExpr _ DOTS _ b:DateTimeExpr {
       return node("DateRange", { start: a, end: b });
+    }
+
+RelativeAmountExpr
+  = u:Unit _ dir:("until" / "since") !IdentChar _ target:DateTimeExpr {
+      return node("RelativeAmount", { unit: u.norm, direction: dir, target });
     }
 
 DateTimeExpr
@@ -202,6 +208,8 @@ TimeZoneStepBoundary
   / "prev" !IdentChar
   / "at" !IdentChar
   / "using" !IdentChar
+  / "until" !IdentChar
+  / "since" !IdentChar
 
 WeekTarget
   = Weekday
@@ -210,18 +218,20 @@ WeekTarget
 
 Weekday
   = w:(
-      "Mon" / "Tue" / "Wed" / "Thu" / "Fri" / "Sat" / "Sun" /
-      "Monday" / "Tuesday" / "Wednesday" / "Thursday" / "Friday" / "Saturday" / "Sunday"
+      "Monday" / "Tuesday" / "Wednesday" / "Thursday" / "Friday" / "Saturday" / "Sunday" /
+      "Mon" / "Tue" / "Wed" / "Thu" / "Fri" / "Sat" / "Sun"
     ) !IdentChar {
       return node("WeekTarget", { kind: "weekdayName", value: w });
     }
 
 Unit
   = u:(
-      "second" / "seconds" / "minute" / "minutes" / "hour" / "hours" /
-      "day" / "days" / "week" / "weeks" / "month" / "months" / "year" / "years"
+      "milliseconds" / "millisecond" /
+      "seconds" / "second" / "minutes" / "minute" / "hours" / "hour" /
+      "days" / "day" / "weeks" / "week" / "months" / "month" / "years" / "year"
     ) !IdentChar {
       const map = {
+        millisecond:"ms", milliseconds:"ms",
         second:"s", seconds:"s",
         minute:"m", minutes:"m",
         hour:"h", hours:"h",

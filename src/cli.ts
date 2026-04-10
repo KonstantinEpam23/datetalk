@@ -17,10 +17,10 @@ try {
 	const out = evaluate(ast, { defaultZone: "Europe/Belgrade" });
 
 	console.log("AST:", JSON.stringify(ast, null, 2));
-	if (out.type === "String") {
-		console.log("Result:", out.value);
-	} else {
+	if (out.type === "DateTime") {
 		console.log("Result (ISO):", out.value.toISO());
+	} else {
+		console.log("Result:", out.value);
 	}
 } catch (error) {
 	const message = error instanceof Error ? error.message : String(error);

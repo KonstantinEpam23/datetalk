@@ -1,7 +1,18 @@
 import { DateTime, Duration } from "luxon";
-import type { Ast, DateTimeExpr, Primary, Step, DurationNode, Value } from "./ast.js";
+import type { Ast, DateTimeExpr, Primary, Step, DurationNode, RelativeAmountExpr, Value } from "./ast.js";
 import { assertNever } from "./ast.js";
 import { nowInZone, resolveTimeZone } from "./timezone.js";
+
+const DIFF_UNIT_MAP = {
+  ms: "milliseconds",
+  s: "seconds",
+  m: "minutes",
+  h: "hours",
+  d: "days",
+  w: "weeks",
+  mo: "months",
+  y: "years",
+} as const;
 
 export interface EvalOptions {
   defaultZone?: string; // e.g. "Europe/Belgrade" or "Belarus"
@@ -12,16 +23,19 @@ export interface EvalOptions {
  * The grammar is minimal, so everything evaluates to DateTime.
  */
 export function evaluate(ast: Ast, opts: EvalOptions = {}): Value {
-  const expr = ast as DateTimeExpr;
-  const lastStep = expr.steps[expr.steps.length - 1];
+  if (ast.type === "RelativeAmount") {
+    return evaluateRelativeAmount(ast, opts);
+  }
+
+  const lastStep = ast.steps[ast.steps.length - 1];
 
   if (lastStep?.type === "AsFormat") {
-    const exprWithoutFormat: DateTimeExpr = { ...expr, steps: expr.steps.slice(0, -1) };
+    const exprWithoutFormat: DateTimeExpr = { ...ast, steps: ast.steps.slice(0, -1) };
     const dt = evalExpr(exprWithoutFormat, opts.defaultZone);
     return { type: "String", value: dt.toFormat(lastStep.format) };
   }
 
-  const dt = evalExpr(expr, opts.defaultZone);
+  const dt = evalExpr(ast, opts.defaultZone);
   return { type: "DateTime", value: dt };
 }
 
@@ -31,6 +45,15 @@ function evalExpr(expr: DateTimeExpr, zone?: string): DateTime {
     dt = applyStep(dt, step);
   }
   return dt;
+}
+
+function evaluateRelativeAmount(expr: RelativeAmountExpr, opts: EvalOptions): Value {
+  const base = nowInZone(opts.defaultZone);
+  const target = evalExpr(expr.target, opts.defaultZone);
+  const [normalizedBase, normalizedTarget] = normalizeDiffEndpoints(base, target, expr.unit);
+  const diffValue = diffDateTimes(normalizedBase, normalizedTarget, expr.unit, expr.direction);
+
+  return { type: "Number", value: diffValue };
 }
 
 function evalPrimary(p: Primary, zone?: string): DateTime {
@@ -123,5 +146,31 @@ function parseDateString(s: string, zone?: string): DateTime {
   }
 
   return candidates[0];
+}
+
+function normalizeDiffEndpoints(base: DateTime, target: DateTime, unit: RelativeAmountExpr["unit"]): [DateTime, DateTime] {
+  if (unit === "d" || unit === "w" || unit === "mo" || unit === "y") {
+    return [base.startOf("day"), target.startOf("day")];
+  }
+
+  return [base, target];
+}
+
+function diffDateTimes(
+  base: DateTime,
+  target: DateTime,
+  unit: RelativeAmountExpr["unit"],
+  direction: RelativeAmountExpr["direction"]
+): number {
+  const luxonUnit = DIFF_UNIT_MAP[unit];
+  const diff = direction === "until"
+    ? target.diff(base, luxonUnit)
+    : base.diff(target, luxonUnit);
+  const value = diff.get(luxonUnit) ?? 0;
+
+  if (value > -1 && value < 1) {
+    return Number(value.toFixed(2).replace(/\.?0+$/, ""));
+  }
+  return Math.round(value);
 }
 

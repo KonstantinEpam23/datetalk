@@ -12,3 +12,5 @@ coverage
 *.ntvs*
 *.njsproj
 *.sln
+
+src/parser.js
