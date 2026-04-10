@@ -1,6 +1,6 @@
 # date-talk-simple
 
-A tiny DSL for date/time expressions with a Peggy parser and a Luxon-based evaluator.
+A tiny DSL for date/time expressions with a PEG-style parser and a Luxon-based evaluator.
 
 ## What is currently implemented
 
@@ -57,12 +57,12 @@ Any number of steps can follow a primary:
 - `- <duration>`
 - `in <IANA timezone>` or `in "<IANA timezone>"`
 - `as "<format string>"`
+- `at <time literal>` or just `<time literal>` ("at" is optional)
 - `start of <unit>`
 - `end of <unit>`
 - `next <week target>`
 - `previous <week target>`
 - `prev <week target>`
-- `at <time literal>`
 - `using <mode>`
 
 Examples:
@@ -73,6 +73,10 @@ Examples:
 - `Friday in Tokyo`
 - `next January + 5d`
 - `last march as "yyyy-MM-dd"`
+- `tomorrow at 10:30am`
+- `yesterday 23:30`
+- `next Friday 15:15`
+- `today at 12pm`
 - `today start of month`
 - `now next Monday at 09:30`
 - `"2026-01-28 14:30" - 90m as "yyyy-MM-dd HH:mm"`
@@ -117,6 +121,7 @@ Examples:
 
 12-hour:
 
+- `H am|pm` (hour only, e.g. `12pm`, `6am`)
 - `H:MM am|pm`
 - `H:MM:SS am|pm`
 - Hour must be `1..12`, minute/second must be `00..59`
@@ -150,7 +155,7 @@ Current evaluator implementation (see [src/evaluator.ts](src/evaluator.ts)) supp
 - Primaries: `now`, `today`, quoted string literal, parenthesized DateTime expressions
 - Steps: `+/- <duration>`, `in "<IANA timezone>"`
 
-It does not yet evaluate parser nodes such as `start/end of`, `next/prev`, `at`, `using`.
+It does not yet evaluate parser nodes such as `start/end of`, `next/prev`, `using`.
 
 ## Known gaps (parser vs evaluator)
 
@@ -161,9 +166,9 @@ It does not yet evaluate parser nodes such as `start/end of`, `next/prev`, `at`,
 - [x] `RelativeAmount` (`days until/since <expr>`) is evaluated.
 - [x] Weekday primaries (`Friday`, `next Friday`, `last Friday`) are evaluated.
 - [x] Month primaries (`April`, `next April`, `last April`) are evaluated.
+- [x] `AtTime` (`at HH:MM`, `HH:MM`, `12pm`) is evaluated.
 - [ ] `Boundary` (`start of <unit>`, `end of <unit>`) parsing exists; evaluator does not implement it.
 - [ ] `NextPrev` (`next/previous/prev <target>`) parsing exists; evaluator does not implement it.
-- [ ] `AtTime` (`at HH:MM...`) parsing exists; evaluator does not implement it.
 - [ ] `UsingMode` (`using clamp|roll|strict`) parsing exists; evaluator does not implement it.
 
 ## Run

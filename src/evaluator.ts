@@ -97,6 +97,9 @@ function applyStep(dt: DateTime, step: Step): DateTime {
       return next;
     }
 
+    case "AtTime":
+      return dt.set({ hour: step.time.hh, minute: step.time.mm, second: step.time.ss, millisecond: 0 });
+
     case "AsFormat":
       throw new Error(`"as" formatting must be the last step in an expression`);
 

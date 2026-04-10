@@ -317,6 +317,53 @@ test("e2e: 'last march as \"yyyy-MM-dd\"' month with format step", () => {
   assert.deepEqual(result, { type: "String", value: "2026-03-01" });
 });
 
+// ── At-time (with and without "at" keyword) ──────────────────────
+// Stubbed now = 2026-04-10T12:00:00Z (Friday)
+
+test("e2e: 'tomorrow at 10:30am'", () => {
+  const result = evaluate(parse("tomorrow at 10:30am"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-11T10:30:00.000Z");
+});
+
+test("e2e: 'yesterday 23:30' (no at keyword, 24h)", () => {
+  const result = evaluate(parse("yesterday 23:30"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-09T23:30:00.000Z");
+});
+
+test("e2e: 'next Friday 15:15' (weekday + bare time)", () => {
+  const result = evaluate(parse("next Friday 15:15"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-17T15:15:00.000Z");
+});
+
+test("e2e: 'today at 12pm' (hour-only 12h format)", () => {
+  const result = evaluate(parse("today at 12pm"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-10T12:00:00.000Z");
+});
+
+test("e2e: 'today at 6am'", () => {
+  const result = evaluate(parse("today at 6am"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-10T06:00:00.000Z");
+});
+
+test("e2e: 'tomorrow 3:45pm' (12h with minutes, no at)", () => {
+  const result = evaluate(parse("tomorrow 3:45pm"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-11T15:45:00.000Z");
+});
+
+test("e2e: 'next monday at 09:00 in Tokyo'", () => {
+  const result = evaluate(parse("next monday at 09:00 in Tokyo"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.zoneName, "Asia/Tokyo");
+  // 2026-04-13T09:00:00Z → Tokyo +9 = 2026-04-13T18:00:00+09:00
+  assert.equal(result.value.toISO(), "2026-04-13T18:00:00.000+09:00");
+});
+
 // ── Restore real clock ───────────────────────────────────────────
 
 test("e2e: teardown restore clock", () => {

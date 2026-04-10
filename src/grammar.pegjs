@@ -21,7 +21,7 @@ Int "integer"
   = digits:[0-9]+ { return parseInt(digits.join(""), 10); }
 
 TwoDigits "two-digit number"
-  = d:[0-9][0-9] { return d.join(""); }
+  = a:[0-9] b:[0-9] { return a + b; }
 
 /* =========================
  * Strings
@@ -177,6 +177,9 @@ AtTime
   = "at" !IdentChar _ t:TimeLiteral {
       return node("AtTime", { time: t });
     }
+  / t:TimeLiteral {
+      return node("AtTime", { time: t });
+    }
 
 UsingMode
   = "using" !IdentChar _ m:Mode {
@@ -282,6 +285,7 @@ WordyDurationPart
 
 TimeLiteral "time"
   = Time12
+  / Time12HourOnly
   / Time24
 
 Time24
@@ -324,6 +328,22 @@ Hour12
   / "11" { return "11"; }
   / "12" { return "12"; }
   / d:[1-9] { return d; }
+
+Time12HourOnly
+  = h:Hour12 _ mer:Meridiem {
+      const H12 = parseInt(h, 10);
+      let H24 = H12 % 12;
+      if (mer === "PM") H24 += 12;
+
+      return node("Time", {
+        clock: 12,
+        hh: H24,
+        mm: 0,
+        ss: 0,
+        meridiem: mer,
+        inputHour: H12
+      });
+    }
 
 Meridiem
   = m:("am"i / "pm"i) { return m.toUpperCase(); }
