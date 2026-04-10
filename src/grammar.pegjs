@@ -17,8 +17,6 @@ _         = " "*
 
 IdentChar = [a-zA-Z0-9_]
 
-DOTS      = ".."
-
 Int
   = digits:[0-9]+ { return parseInt(digits.join(""), 10); }
 
@@ -52,20 +50,8 @@ SingleQuotedChar
  * ========================= */
 
 Expr
-  = WithinExpr
-  / RangeExpr
-  / RelativeAmountExpr
+  = RelativeAmountExpr
   / DateTimeExpr
-
-WithinExpr
-  = dt:DateTimeExpr _ "is" !IdentChar _ "within" !IdentChar _ r:RangeValue {
-      return node("Within", { value: dt, range: r });
-    }
-
-RangeExpr
-  = a:DateTimeExpr _ DOTS _ b:DateTimeExpr {
-      return node("DateRange", { start: a, end: b });
-    }
 
 RelativeAmountExpr
   = u:Unit _ dir:("until" / "since") !IdentChar _ target:DateTimeExpr {
@@ -83,10 +69,7 @@ DateTimeExpr
  * ========================= */
 
 Primary
-  = RangeStart
-  / RangeEnd
-  / RangeDays
-  / Now
+  = Now
   / Today
   / Tomorrow
   / Yesterday
@@ -107,29 +90,6 @@ Tomorrow
 
 Yesterday
   = "yesterday" !IdentChar { return node("Yesterday", {}); }
-
-/* =========================
- * Range queries
- * ========================= */
-
-RangeValue
-  = RangeExpr
-  / "(" _ r:RangeExpr _ ")" { return r; }
-
-RangeStart
-  = "start" !IdentChar _ "of" !IdentChar _ r:RangeValue {
-      return node("RangeStart", { range: r });
-    }
-
-RangeEnd
-  = "end" !IdentChar _ "of" !IdentChar _ r:RangeValue {
-      return node("RangeEnd", { range: r });
-    }
-
-RangeDays
-  = "days" !IdentChar _ "in" !IdentChar _ r:RangeValue {
-      return node("RangeDays", { range: r });
-    }
 
 /* =========================
  * Steps (DateTime transforms)

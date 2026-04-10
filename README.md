@@ -18,14 +18,12 @@ Entry point:
 Top-level expressions:
 
 - `DateTimeExpr`
-- `DateTimeExpr .. DateTimeExpr` (date range)
-- `DateTimeExpr is within (DateTimeExpr .. DateTimeExpr)`
+- `<unit> until/since <DateTimeExpr>` (relative amount)
 
 Examples:
 
 - `now`
 - `today + 2h`
-- `"2026-01-28" .. "2026-02-10"`
 - `now is within (today .. tomorrow)`
 
 ## Primaries
@@ -34,16 +32,8 @@ Examples:
 - `today`
 - `tomorrow`
 - `yesterday`
-- `start of <range>`
-- `end of <range>`
-- `days in <range>`
 - Parenthesized expression: `(Expr)`
 - Quoted string literal: `"..."` or `'...'`
-
-Range forms used by `start/end/days in`:
-
-- `<DateTimeExpr> .. <DateTimeExpr>`
-- `(<DateTimeExpr> .. <DateTimeExpr>)`
 
 ## Steps (applied left-to-right)
 
@@ -143,20 +133,19 @@ Current evaluator implementation (see [src/evaluator.ts](src/evaluator.ts)) supp
 - Primaries: `now`, `today`, quoted string literal, parenthesized DateTime expressions
 - Steps: `+/- <duration>`, `in "<IANA timezone>"`
 
-It does not yet evaluate parser nodes such as `tomorrow`, ranges, `start/end of`, `next/prev`, `at`, `using`, or `as`.
+It does not yet evaluate parser nodes such as `start/end of`, `next/prev`, `at`, `using`.
 
 ## Known gaps (parser vs evaluator)
 
 - [x] `- <duration>` is parsed and evaluated as subtraction.
 - [x] Duration units `mo`/`y` (and wordy month/year) are evaluated.
-- [ ] `DateRange` (`a .. b`) parsing exists; evaluator has no range value type yet.
-- [ ] `Within` (`x is within a..b`) parsing exists; evaluator has no boolean result type yet.
-- [ ] `RangeStart` / `RangeEnd` / `RangeDays` parsing exists; evaluator does not implement range helpers.
+- [x] `tomorrow` / `yesterday` primaries are evaluated.
+- [x] `AsFormat` (`as "..."`) is evaluated.
+- [x] `RelativeAmount` (`days until/since <expr>`) is evaluated.
 - [ ] `Boundary` (`start of <unit>`, `end of <unit>`) parsing exists; evaluator does not implement it.
 - [ ] `NextPrev` (`next/previous/prev <target>`) parsing exists; evaluator does not implement it.
 - [ ] `AtTime` (`at HH:MM...`) parsing exists; evaluator does not implement it.
 - [ ] `UsingMode` (`using clamp|roll|strict`) parsing exists; evaluator does not implement it.
-- [ ] `AsFormat` (`as "..."`) parsing exists; evaluator does not expose formatted output mode.
 
 ## Run
 
