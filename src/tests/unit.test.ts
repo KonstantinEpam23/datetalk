@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { evaluate, parse, resolveTimeZone } from "./index.js";
+import { evaluate, parse, resolveTimeZone } from "../index.js";
 
 test("parses unquoted and multi-word time zones", () => {
   const ast = parse("tomorrow in New York");

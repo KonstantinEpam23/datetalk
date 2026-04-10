@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import { COMMON_TIME_ZONE_ALIASES } from "./constants.js";
+import { COMMON_TIME_ZONE_ALIASES } from "./timezone-aliases.js";
 
 const TIME_ZONE_ALIASES = buildTimeZoneAliases();
 

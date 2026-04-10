@@ -7,8 +7,8 @@
   "type": "module",
   "scripts": {
     "build:parser": "peggy --format es --output src/parser.js src/grammar.pegjs",
-    "build": "npm run build:parser && cp src/parser.js dist/parser.js && tsc -p tsconfig.json",
-    "test": "npm run build && node --test dist/*.test.js",
+    "build": "npm run build:parser && tsc -p tsconfig.json && cp src/parser.js dist/parser.js",
+    "test": "npm run build:parser && tsc -p tsconfig.test.json && cp src/parser.js dist/parser.js && node --test dist/tests/*.test.js",
     "dev": "node --enable-source-maps dist/cli.js"
   },
   "dependencies": {

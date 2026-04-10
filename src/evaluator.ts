@@ -1,18 +1,9 @@
 import { DateTime, Duration } from "luxon";
 import type { Ast, DateTimeExpr, Primary, Step, DurationNode, RelativeAmountExpr, Value } from "./ast.js";
-import { assertNever } from "./ast.js";
-import { nowInZone, resolveTimeZone } from "./timezone.js";
-
-const DIFF_UNIT_MAP = {
-  ms: "milliseconds",
-  s: "seconds",
-  m: "minutes",
-  h: "hours",
-  d: "days",
-  w: "weeks",
-  mo: "months",
-  y: "years",
-} as const;
+import { assertNever } from "./utils/assert-never.js";
+import { nowInZone, resolveTimeZone } from "./utils/timezone.js";
+import { parseDateString } from "./utils/parse-date.js";
+import { normalizeDiffEndpoints, diffDateTimes } from "./utils/diff.js";
 
 export interface EvalOptions {
   defaultZone?: string; // e.g. "Europe/Belgrade" or "Belarus"
@@ -127,50 +118,5 @@ function durationToLuxon(d: DurationNode): Duration {
   return Duration.fromObject(obj);
 }
 
-function parseDateString(s: string, zone?: string): DateTime {
-  const resolvedZone = zone ? resolveTimeZone(zone) : undefined;
-  const candidates: DateTime[] = [];
 
-  // ISO: "2026-01-28" or "2026-01-28T14:30"
-  candidates.push(resolvedZone ? DateTime.fromISO(s, { zone: resolvedZone }) : DateTime.fromISO(s));
-
-  // Common: "2026-01-28 14:30"
-  candidates.push(
-    resolvedZone
-      ? DateTime.fromFormat(s, "yyyy-MM-dd HH:mm", { zone: resolvedZone })
-      : DateTime.fromFormat(s, "yyyy-MM-dd HH:mm")
-  );
-
-  for (const dt of candidates) {
-    if (dt.isValid) return dt;
-  }
-
-  return candidates[0];
-}
-
-function normalizeDiffEndpoints(base: DateTime, target: DateTime, unit: RelativeAmountExpr["unit"]): [DateTime, DateTime] {
-  if (unit === "d" || unit === "w" || unit === "mo" || unit === "y") {
-    return [base.startOf("day"), target.startOf("day")];
-  }
-
-  return [base, target];
-}
-
-function diffDateTimes(
-  base: DateTime,
-  target: DateTime,
-  unit: RelativeAmountExpr["unit"],
-  direction: RelativeAmountExpr["direction"]
-): number {
-  const luxonUnit = DIFF_UNIT_MAP[unit];
-  const diff = direction === "until"
-    ? target.diff(base, luxonUnit)
-    : base.diff(target, luxonUnit);
-  const value = diff.get(luxonUnit) ?? 0;
-
-  if (value > -1 && value < 1) {
-    return Number(value.toFixed(2).replace(/\.?0+$/, ""));
-  }
-  return Math.round(value);
-}
 

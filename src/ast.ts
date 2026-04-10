@@ -1,4 +1,4 @@
-import { DateTime } from "luxon";
+import type { DateTime } from "luxon";
 
 export type Ast = DateTimeExpr | RelativeAmountExpr;
 
@@ -56,7 +56,3 @@ export type Value =
   | { type: "DateTime"; value: DateTime }
   | { type: "String"; value: string }
   | { type: "Number"; value: number };
-
-export function assertNever(x: never): never {
-  throw new Error(`Unexpected: ${JSON.stringify(x)}`);
-}
