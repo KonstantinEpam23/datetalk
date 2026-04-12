@@ -1,4 +1,4 @@
-import { DateTime, Duration, Info } from "luxon";
+import { DateTime, Duration } from "luxon";
 import type { Ast, DateTimeExpr, Primary, Step, DurationNode, RelativeAmountExpr, Value } from "./ast.js";
 import { assertNever } from "./utils/assert-never.js";
 import { nowInZone, resolveTimeZone } from "./utils/timezone.js";
@@ -91,8 +91,17 @@ function applyStep(dt: DateTime, step: Step): DateTime {
     }
 
     case "InTZ": {
-      const resolvedZone = resolveTimeZone(step.tz);
-      const next = dt.setZone(resolvedZone);
+      // "in <tz>" = qualify: the wall-clock time IS in that zone
+      const resolved = resolveTimeZone(step.tz);
+      const next = dt.setZone(resolved, { keepLocalTime: true });
+      if (!next.isValid) throw new Error(`Invalid time zone: "${step.tz}"`);
+      return next;
+    }
+
+    case "ToTZ": {
+      // "to/into <tz>" = display: same instant, shown in that zone
+      const resolved = resolveTimeZone(step.tz);
+      const next = dt.setZone(resolved);
       if (!next.isValid) throw new Error(`Invalid time zone: "${step.tz}"`);
       return next;
     }

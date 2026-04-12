@@ -25,7 +25,7 @@ export type Primary =
   | { type: "Literal"; kind: "string"; value: string }
   | DateTimeExpr; // parentheses return Expr directly
 
-export type Step = AddStep | InTzStep | AsFormatStep | AtTimeStep;
+export type Step = AddStep | InTzStep | ToTzStep | AsFormatStep | AtTimeStep;
 
 export interface AddStep {
   type: "AddSub";
@@ -35,6 +35,11 @@ export interface AddStep {
 
 export interface InTzStep {
   type: "InTZ";
+  tz: string;
+}
+
+export interface ToTzStep {
+  type: "ToTZ";
   tz: string;
 }
 

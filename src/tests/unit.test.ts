@@ -4,12 +4,12 @@ import test from "node:test";
 import { evaluate, parse, resolveTimeZone } from "../index.js";
 
 test("parses unquoted and multi-word time zones", () => {
-  const ast = parse("tomorrow in New York");
+  const ast = parse("tomorrow to New York");
 
   assert.equal(ast.type, "DateTimeExpr");
   assert.equal(ast.head.type, "Tomorrow");
   assert.equal(ast.steps.length, 1);
-  assert.deepEqual(ast.steps[0], { type: "InTZ", tz: "New York" });
+  assert.deepEqual(ast.steps[0], { type: "ToTZ", tz: "New York" });
 });
 
 test("evaluates date arithmetic and formatting", () => {

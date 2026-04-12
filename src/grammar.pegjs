@@ -139,6 +139,7 @@ MonthNameCI "month name"
 Step "date/time transformation step"
   = AddSub
   / InTZ
+  / ToTZ
   / AsFormat
   / StartEndOf
   / NextPrev
@@ -153,6 +154,11 @@ AddSub
 InTZ
   = "in" !IdentChar _ tz:TimeZone {
       return node("InTZ", { tz });
+    }
+
+ToTZ
+  = ("into" / "to") !IdentChar _ tz:TimeZone {
+      return node("ToTZ", { tz });
     }
 
 AsFormat
@@ -214,6 +220,8 @@ TimeZoneStepBoundary
   / "previous" !IdentChar
   / "prev" !IdentChar
   / "at" !IdentChar
+  / "into" !IdentChar
+  / "to" !IdentChar
   / "using" !IdentChar
   / "until" !IdentChar
   / "since" !IdentChar
