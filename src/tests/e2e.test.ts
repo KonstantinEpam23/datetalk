@@ -84,6 +84,7 @@ test("e2e: 'now to Tokyo' display-converts timezone", () => {
   const result = evaluate(parse("now to Tokyo"), { defaultZone: "UTC" });
   assert.equal(result.type, "DateTime");
   assert.equal(result.value.toISO(), "2026-04-10T21:00:00.000+09:00");
+  assert.deepEqual(result.tz, { representation: "Asia/Tokyo" });
 });
 
 test("e2e: 'now to New York' display-converts to US Eastern", () => {
@@ -91,6 +92,7 @@ test("e2e: 'now to New York' display-converts to US Eastern", () => {
   assert.equal(result.type, "DateTime");
   // EDT (UTC-4) in April
   assert.equal(result.value.toISO(), "2026-04-10T08:00:00.000-04:00");
+  assert.deepEqual(result.tz, { representation: "America/New_York" });
 });
 
 test("e2e: 'now to Belarus' display-converts to Minsk time", () => {
@@ -123,7 +125,7 @@ test("e2e: 'tomorrow to Tokyo as \"yyyy-MM-dd HH:mm\"'", () => {
     { defaultZone: "UTC" },
   );
   // tomorrow UTC = 2026-04-11T00:00:00Z → Tokyo (+9) = 2026-04-11T09:00
-  assert.deepEqual(result, { type: "String", value: "2026-04-11 09:00" });
+  assert.deepEqual(result, { type: "String", value: "2026-04-11 09:00", tz: { representation: "Asia/Tokyo" } });
 });
 
 // ── Date literals ────────────────────────────────────────────────
@@ -368,6 +370,7 @@ test("e2e: 'next monday at 09:00 in Tokyo'", () => {
   // "in Tokyo" = qualify: 09:00 IS Tokyo time → instant = 00:00 UTC
   assert.equal(result.value.zoneName, "Asia/Tokyo");
   assert.equal(result.value.toISO(), "2026-04-13T09:00:00.000+09:00");
+  assert.deepEqual(result.tz, { conversion: "Asia/Tokyo" });
 });
 
 // ── Timezone-aware until/since ───────────────────────────────────
@@ -377,19 +380,19 @@ test("e2e: 'hours until tomorrow 1am in Moscow' vs 'in New York' differ", () => 
   // Moscow = UTC+3: tomorrow(Moscow) 1am = April 11 01:00+03:00 = April 10 22:00 UTC
   // diff from 12:00 UTC = 10 hours
   const msk = evaluate(parse("hours until tomorrow 1am in Moscow"), { defaultZone: "UTC" });
-  assert.deepEqual(msk, { type: "Number", value: 10 });
+  assert.deepEqual(msk, { type: "Number", value: 10, tz: { conversion: "Europe/Moscow" } });
 
   // New York = UTC-4 (EDT): tomorrow(NY) 1am = April 11 01:00-04:00 = April 11 05:00 UTC
   // diff from 12:00 UTC = 17 hours
   const ny = evaluate(parse("hours until tomorrow 1am in New York"), { defaultZone: "UTC" });
-  assert.deepEqual(ny, { type: "Number", value: 17 });
+  assert.deepEqual(ny, { type: "Number", value: 17, tz: { conversion: "America/New_York" } });
 });
 
 test("e2e: 'hours until tomorrow in Tokyo' timezone context for until/since", () => {
   // In until/since, "in Tokyo" propagates to primary: tomorrow(Tokyo) = April 11 00:00+09:00
   // = April 10 15:00 UTC. diff from 12:00 UTC = 3 hours
   const result = evaluate(parse("hours until tomorrow in Tokyo"), { defaultZone: "UTC" });
-  assert.deepEqual(result, { type: "Number", value: 3 });
+  assert.deepEqual(result, { type: "Number", value: 3, tz: { conversion: "Asia/Tokyo" } });
 });
 
 test("e2e: 'tomorrow at 2pm in India' interprets 2pm as India time", () => {
@@ -397,6 +400,7 @@ test("e2e: 'tomorrow at 2pm in India' interprets 2pm as India time", () => {
   const result = evaluate(parse("tomorrow at 2pm in India"), { defaultZone: "UTC" });
   assert.equal(result.type, "DateTime");
   assert.equal(result.value.toISO(), "2026-04-11T14:00:00.000+05:30");
+  assert.deepEqual(result.tz, { conversion: "Asia/Kolkata" });
 });
 
 test("e2e: 'tomorrow at 2pm to India' display-converts to India", () => {
@@ -404,6 +408,7 @@ test("e2e: 'tomorrow at 2pm to India' display-converts to India", () => {
   const result = evaluate(parse("tomorrow at 2pm to India"), { defaultZone: "UTC" });
   assert.equal(result.type, "DateTime");
   assert.equal(result.value.toISO(), "2026-04-11T19:30:00.000+05:30");
+  assert.deepEqual(result.tz, { representation: "Asia/Kolkata" });
 });
 
 test("e2e: 'in' vs 'to' produce different results with at-time", () => {
@@ -412,6 +417,11 @@ test("e2e: 'in' vs 'to' produce different results with at-time", () => {
   assert.equal(qualify.type, "DateTime");
   assert.equal(display.type, "DateTime");
   assert.notEqual((qualify.value as DateTime).toMillis(), (display.value as DateTime).toMillis());
+});
+
+test("e2e: no tz info when no timezone steps", () => {
+  const result = evaluate(parse("tomorrow at 2pm"), { defaultZone: "UTC" });
+  assert.equal(result.tz, undefined);
 });
 
 // ── Restore real clock ───────────────────────────────────────────

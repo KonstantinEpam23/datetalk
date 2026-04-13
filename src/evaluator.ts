@@ -1,5 +1,5 @@
 import { DateTime, Duration } from "luxon";
-import type { Ast, DateTimeExpr, Primary, Step, DurationNode, RelativeAmountExpr, Value } from "./ast.js";
+import type { Ast, DateTimeExpr, Primary, Step, DurationNode, RelativeAmountExpr, Value, TimezoneInfo } from "./ast.js";
 import { assertNever } from "./utils/assert-never.js";
 import { nowInZone, resolveTimeZone } from "./utils/timezone.js";
 import { parseDateString } from "./utils/parse-date.js";
@@ -22,29 +22,44 @@ export function evaluate(ast: Ast, opts: EvalOptions = {}): Value {
 
   if (lastStep?.type === "AsFormat") {
     const exprWithoutFormat: DateTimeExpr = { ...ast, steps: ast.steps.slice(0, -1) };
-    const dt = evalExpr(exprWithoutFormat, opts.defaultZone);
-    return { type: "String", value: dt.toFormat(lastStep.format) };
+    const { dt, tz } = evalExpr(exprWithoutFormat, opts.defaultZone);
+    return { type: "String", value: dt.toFormat(lastStep.format), ...maybeTz(tz) };
   }
 
-  const dt = evalExpr(ast, opts.defaultZone);
-  return { type: "DateTime", value: dt };
+  const { dt, tz } = evalExpr(ast, opts.defaultZone);
+  return { type: "DateTime", value: dt, ...maybeTz(tz) };
 }
 
-function evalExpr(expr: DateTimeExpr, zone?: string): DateTime {
+interface ExprResult {
+  dt: DateTime;
+  tz: TimezoneInfo;
+}
+
+function evalExpr(expr: DateTimeExpr, zone?: string): ExprResult {
   let dt = evalPrimary(expr.head, zone);
+  const tz: TimezoneInfo = {};
   for (const step of expr.steps) {
+    if (step.type === "InTZ") {
+      tz.conversion = resolveTimeZone(step.tz);
+    } else if (step.type === "ToTZ") {
+      tz.representation = resolveTimeZone(step.tz);
+    }
     dt = applyStep(dt, step);
   }
-  return dt;
+  return { dt, tz };
 }
 
 function evaluateRelativeAmount(expr: RelativeAmountExpr, opts: EvalOptions): Value {
   const base = nowInZone(opts.defaultZone);
-  const target = evalExpr(expr.target, opts.defaultZone);
+  const { dt: target, tz } = evalExpr(expr.target, opts.defaultZone);
   const [normalizedBase, normalizedTarget] = normalizeDiffEndpoints(base, target, expr.unit);
   const diffValue = diffDateTimes(normalizedBase, normalizedTarget, expr.unit, expr.direction);
 
-  return { type: "Number", value: diffValue };
+  return { type: "Number", value: diffValue, ...maybeTz(tz) };
+}
+
+function maybeTz(tz: TimezoneInfo): { tz: TimezoneInfo } | {} {
+  return tz.conversion || tz.representation ? { tz } : {};
 }
 
 function evalPrimary(p: Primary, zone?: string): DateTime {
@@ -76,7 +91,7 @@ function evalPrimary(p: Primary, zone?: string): DateTime {
     }
 
     case "DateTimeExpr":
-      return evalExpr(p, zone);
+      return evalExpr(p, zone).dt;
 
     default:
       return assertNever(p as never);

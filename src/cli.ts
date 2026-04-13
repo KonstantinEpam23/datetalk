@@ -20,6 +20,9 @@ try {
 	} else {
 		console.log("Result:", out.value);
 	}
+	if (out.tz) {
+		console.log("Timezone:", JSON.stringify(out.tz));
+	}
 } catch (error) {
 	const message = error instanceof Error ? error.message : String(error);
 	console.error(`Error: ${message}`);

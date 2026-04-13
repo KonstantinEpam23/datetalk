@@ -15,6 +15,10 @@ export function resolveTimeZone(zone: string): string {
   const candidate = zone.trim();
   if (!candidate) return candidate;
 
+  if (candidate.toLowerCase() === "local") {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC";
+  }
+
   const direct = DateTime.now().setZone(candidate);
   if (direct.isValid) return candidate;
 

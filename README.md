@@ -1,103 +1,85 @@
 # date-talk-simple
 
-A tiny DSL for date/time expressions with a PEG-style parser and a Luxon-based evaluator.
+A tiny, human-readable DSL for date/time expressions. Powered by a [Peggy](https://peggyjs.org/) PEG parser and a [Luxon](https://moment.github.io/luxon/)-based evaluator.
 
-## What is currently implemented
+See [intro.md](intro.md) for a friendly walkthrough, or [language-spec.md](language-spec.md) for the full specification.
 
-- Parser: rich grammar from [src/grammar.pegjs](src/grammar.pegjs)
-- Evaluator: currently supports a subset (`now`, `today`, quoted date literal, `+/- duration`, `in "TZ"`, parentheses)
+## Quick examples
 
-This README documents the parser syntax first, then lists evaluator limits.
+```
+now
+today + 2h 30m
+tomorrow at 10:30am
+next Friday 15:00 in Tokyo
+hours until tomorrow 1am in Moscow
+now to New York as "HH:mm"
+last march as "yyyy-MM-dd"
+"2026-01-28 14:30" - 90m as "yyyy-MM-dd HH:mm"
+```
 
-## Grammar overview
+## Features
 
-Entry point:
+- **Date primaries** — `now`, `today`, `tomorrow`, `yesterday`, weekday names (`friday`, `next monday`, `last wednesday`), month names (`april`, `next january`, `last december`)
+- **Arithmetic** — `+ / -` with compact (`2h30m`) or wordy (`2 hours 30 minutes`) durations
+- **Time setting** — `at 10:30am`, `14:00`, `3pm` (the `at` keyword is optional)
+- **Timezone qualification (`in`)** — reinterprets the wall-clock time as being in the given zone: `tomorrow at 2pm in India`
+- **Timezone display (`to` / `into`)** — converts the result to another zone for display: `now to Tokyo`
+- **Formatting** — `as "yyyy-MM-dd HH:mm"` or `as weekday` (Luxon format tokens)
+- **Relative amounts** — `hours until tomorrow 1am in Moscow`, `days since yesterday`
+- **Date literals** — `"2026-04-15"`, `"2026-04-15 14:30"`
+- **Parentheses** — `(now + 2h) to Tokyo`
+- **Timezone info in results** — the evaluation result includes metadata about which timezones were applied (conversion vs. representation)
+- **Rich timezone aliases** — use `Tokyo`, `New York`, `India`, `Belarus`, `England`, `local`, etc. instead of IANA identifiers
 
-- `Start = Expr`
+## Timezone semantics: `in` vs `to`
 
-Top-level expressions:
+This is the most important distinction in the language:
 
-- `DateTimeExpr`
-- `<unit> until/since <DateTimeExpr>` (relative amount)
+| Operator | Meaning | Example | Effect |
+|----------|---------|---------|--------|
+| `in` | **Qualify / reinterpret** | `tomorrow at 2pm in India` | 2pm IS India time (wall-clock stays, instant changes) |
+| `to` / `into` | **Display / convert** | `tomorrow at 2pm to India` | 2pm UTC shown as India time (instant stays, wall-clock changes) |
 
-Examples:
+The evaluation result carries a `TimezoneInfo` object with optional `conversion` (from `in`) and `representation` (from `to`/`into`) fields, so callers always know how the result was derived.
 
-- `now`
-- `today + 2h`
-- `now is within (today .. tomorrow)`
+## Installation & usage
 
-## Primaries
+```bash
+npm install
+npm run build
+```
 
-- `now`
-- `today`
-- `tomorrow`
-- `yesterday`
-- Weekday name (case-insensitive): `Friday`, `next Friday`, `last friday`
-- Month name (case-insensitive): `April`, `next april`, `last December`
-- Parenthesized expression: `(Expr)`
-- Quoted string literal: `"..."` or `'...'`
+### CLI
 
-### Weekday resolution
+```bash
+npm run dev -- 'now + 2h to Tokyo'
+npm run dev -- 'hours until tomorrow 1am in Moscow'
+```
 
-- `Friday` — nearest Friday (today if today is Friday, otherwise whichever direction is closer)
-- `next Friday` — the first Friday strictly after today
-- `last Friday` — the most recent Friday strictly before today
+### Programmatic API
 
-### Month resolution
+```typescript
+import { parse, evaluate } from "date-talk-simple";
 
-- `April` — nearest April 1st (current month if it matches, otherwise whichever direction is closer)
-- `next April` — April 1st of the next occurrence strictly after this month
-- `last April` — April 1st of the most recent occurrence strictly before this month
+const result = evaluate(parse("tomorrow at 3pm in Tokyo to local"));
+// result.type === "DateTime"
+// result.value  — Luxon DateTime
+// result.tz     — { conversion: "Asia/Tokyo", representation: "America/New_York" }
+```
 
-## Steps (applied left-to-right)
+## Build & test
 
-Any number of steps can follow a primary:
+```bash
+npm run build        # peggy → tsc → copy parser
+npm test             # build + run all tests (Node.js built-in test runner)
+```
 
-- `+ <duration>`
-- `- <duration>`
-- `in <IANA timezone>` or `in "<IANA timezone>"`
-- `as "<format string>"`
-- `at <time literal>` or just `<time literal>` ("at" is optional)
-- `start of <unit>`
-- `end of <unit>`
-- `next <week target>`
-- `previous <week target>`
-- `prev <week target>`
-- `using <mode>`
+## Tech stack
 
-Examples:
-
-- `now + 72h in Europe/Belgrade`
-- `now in Belarus`
-- `tomorrow in Minsk`
-- `Friday in Tokyo`
-- `next January + 5d`
-- `last march as "yyyy-MM-dd"`
-- `tomorrow at 10:30am`
-- `yesterday 23:30`
-- `next Friday 15:15`
-- `today at 12pm`
-- `today start of month`
-- `now next Monday at 09:30`
-- `"2026-01-28 14:30" - 90m as "yyyy-MM-dd HH:mm"`
-
-## Duration
-
-Durations are one or more parts.
-
-Compact parts:
-
-- `<int>ms`, `<int>s`, `<int>m`, `<int>h`, `<int>d`, `<int>w`, `<int>mo`, `<int>y`
-
-Wordy parts:
-
-- `<int> second(s)`
-- `<int> minute(s)`
-- `<int> hour(s)`
-- `<int> day(s)`
-- `<int> week(s)`
-- `<int> month(s)`
-- `<int> year(s)`
+- **Parser**: [Peggy](https://peggyjs.org/) v4 — PEG grammar → ES module
+- **Runtime**: [Luxon](https://moment.github.io/luxon/) v3 — DateTime/Duration/timezone handling
+- **Language**: TypeScript 5 — ES2022 target, ESM modules
+- **Tests**: Node.js built-in test runner (`node --test`)
 
 Examples:
 

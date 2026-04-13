@@ -64,7 +64,14 @@ export interface DurationPartNode {
   unit: "ms" | "s" | "m" | "h" | "d" | "w" | "mo" | "y";
 }
 
+export interface TimezoneInfo {
+  /** The zone the wall-clock time was qualified/interpreted in ("in <tz>") */
+  conversion?: string;
+  /** The zone the result is displayed in ("to/into <tz>") */
+  representation?: string;
+}
+
 export type Value =
-  | { type: "DateTime"; value: DateTime }
-  | { type: "String"; value: string }
-  | { type: "Number"; value: number };
+  | { type: "DateTime"; value: DateTime; tz?: TimezoneInfo }
+  | { type: "String"; value: string; tz?: TimezoneInfo }
+  | { type: "Number"; value: number; tz?: TimezoneInfo };
