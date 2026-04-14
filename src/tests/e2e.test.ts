@@ -40,6 +40,44 @@ test("e2e: 'yesterday' returns start of the previous day", () => {
   assert.equal(result.value.toISO(), "2026-04-09T00:00:00.000Z");
 });
 
+// ── Midnight / Midday ────────────────────────────────────────────
+
+test("e2e: 'midnight' returns start of today", () => {
+  const result = evaluate(parse("midnight"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-10T00:00:00.000Z");
+});
+
+test("e2e: 'midday' returns today at noon", () => {
+  const result = evaluate(parse("midday"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-10T12:00:00.000Z");
+});
+
+test("e2e: 'noon' is an alias for midday", () => {
+  const result = evaluate(parse("noon"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-10T12:00:00.000Z");
+});
+
+test("e2e: 'tomorrow at midnight' sets time to 00:00", () => {
+  const result = evaluate(parse("tomorrow at midnight"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-11T00:00:00.000Z");
+});
+
+test("e2e: 'tomorrow midday' sets time to 12:00 (no at keyword)", () => {
+  const result = evaluate(parse("tomorrow midday"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-11T12:00:00.000Z");
+});
+
+test("e2e: 'tomorrow noon in Tokyo' combines time alias with timezone", () => {
+  const result = evaluate(parse("tomorrow noon in Tokyo"), { defaultZone: "UTC" });
+  assert.equal(result.type, "DateTime");
+  assert.equal(result.value.toISO(), "2026-04-11T12:00:00.000+09:00");
+});
+
 // ── Arithmetic ───────────────────────────────────────────────────
 
 test("e2e: 'now + 2h' adds hours", () => {
@@ -323,6 +361,69 @@ test("e2e: 'february' (nearest) returns last February (2 months behind)", () => 
 test("e2e: 'last march as \"yyyy-MM-dd\"' month with format step", () => {
   const result = evaluate(parse('last march as "yyyy-MM-dd"'), { defaultZone: "UTC" });
   assert.deepEqual(result, { type: "String", value: "2026-03-01" });
+});
+
+// ── Contextual resolution in until/since ─────────────────────────
+// Stubbed now = 2026-04-10T12:00:00Z (Friday, noon)
+
+test("e2e: 'hours until midnight' resolves to next midnight (tomorrow 00:00)", () => {
+  // now=12:00 → next midnight = 2026-04-11T00:00 → 12 hours
+  const result = evaluate(parse("hours until midnight"), { defaultZone: "UTC" });
+  assert.deepEqual(result, { type: "Number", value: 12 });
+});
+
+test("e2e: 'hours since midnight' resolves to previous midnight (today 00:00)", () => {
+  // now=12:00 → previous midnight = 2026-04-10T00:00 → 12 hours
+  const result = evaluate(parse("hours since midnight"), { defaultZone: "UTC" });
+  assert.deepEqual(result, { type: "Number", value: 12 });
+});
+
+test("e2e: 'hours until midday' resolves to next noon (tomorrow 12:00)", () => {
+  // now=12:00 (exactly noon) → next midday = tomorrow noon → 24 hours
+  const result = evaluate(parse("hours until midday"), { defaultZone: "UTC" });
+  assert.deepEqual(result, { type: "Number", value: 24 });
+});
+
+test("e2e: 'hours since noon' resolves to previous noon (today 12:00)", () => {
+  // now=12:00 (exactly noon) → previous noon = today noon → 0 hours
+  const result = evaluate(parse("hours since noon"), { defaultZone: "UTC" });
+  assert.deepEqual(result, { type: "Number", value: 0 });
+});
+
+test("e2e: 'days until friday' resolves to next friday in until context", () => {
+  // now is Friday → next friday = 7 days
+  const result = evaluate(parse("days until friday"), { defaultZone: "UTC" });
+  assert.deepEqual(result, { type: "Number", value: 7 });
+});
+
+test("e2e: 'days since friday' resolves to last friday in since context", () => {
+  // now is Friday → last friday = 7 days ago
+  const result = evaluate(parse("days since friday"), { defaultZone: "UTC" });
+  assert.deepEqual(result, { type: "Number", value: 7 });
+});
+
+test("e2e: 'days until monday' resolves to next monday in until context", () => {
+  // Friday → next Monday = 3 days
+  const result = evaluate(parse("days until monday"), { defaultZone: "UTC" });
+  assert.deepEqual(result, { type: "Number", value: 3 });
+});
+
+test("e2e: 'months until april' resolves to next april in until context", () => {
+  // now is April → next april = 12 months
+  const result = evaluate(parse("months until april"), { defaultZone: "UTC" });
+  assert.deepEqual(result, { type: "Number", value: 12 });
+});
+
+test("e2e: 'months since april' resolves to last april in since context", () => {
+  // now is April → last april = 12 months ago
+  const result = evaluate(parse("months since april"), { defaultZone: "UTC" });
+  assert.deepEqual(result, { type: "Number", value: 12 });
+});
+
+test("e2e: 'days until next friday' explicit next is unchanged", () => {
+  // explicit next → always strictly after today
+  const result = evaluate(parse("days until next friday"), { defaultZone: "UTC" });
+  assert.deepEqual(result, { type: "Number", value: 7 });
 });
 
 // ── At-time (with and without "at" keyword) ──────────────────────

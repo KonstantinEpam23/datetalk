@@ -72,8 +72,10 @@ A primary is the starting value of an expression.
 | `today` | Start of the current day (00:00:00.000) |
 | `tomorrow` | Start of the next day |
 | `yesterday` | Start of the previous day |
+| `midnight` | Today at 00:00 (see §3.6 for contextual behavior) |
+| `midday` / `noon` | Today at 12:00 (see §3.6 for contextual behavior) |
 
-All keywords are case-sensitive and must not be followed by an identifier character (`[a-zA-Z0-9_]`).
+All keywords are case-sensitive except `midnight`, `midday`, and `noon` which are case-insensitive. Keywords must not be followed by an identifier character (`[a-zA-Z0-9_]`).
 
 ### 3.2 Weekday references
 
@@ -111,7 +113,30 @@ Resolution rules:
 
 The result is always the 1st of the month at start-of-day.
 
-### 3.4 Parenthesized expressions
+### 3.6 Contextual resolution in `until` / `since`
+
+When certain primaries appear as the target of a `RelativeAmountExpr`, they resolve directionally to produce intuitive results:
+
+| Primary | In `until` context | In `since` context | Standalone |
+|---------|-------------------|-------------------|------------|
+| `midnight` | Next midnight (tomorrow 00:00) | Previous midnight (today 00:00) | Today 00:00 |
+| `midday` / `noon` | Next noon (today or tomorrow) | Previous noon (today or yesterday) | Today 12:00 |
+| Bare weekday (`friday`) | Next occurrence | Last occurrence | Nearest |
+| Bare month (`april`) | Next occurrence | Last occurrence | Nearest |
+
+Explicit `next`/`last` modifiers are **not affected** — only the default "nearest" resolution changes.
+
+Examples:
+
+```
+hours until midnight        → hours until tomorrow 00:00
+hours since midnight        → hours since today 00:00
+days until friday           → days until next friday
+days since friday           → days since last friday
+months until january        → months until next january
+```
+
+### 3.7 Parenthesized expressions
 
 ```
 Parens = "(" Expr ")"
@@ -119,7 +144,7 @@ Parens = "(" Expr ")"
 
 Any expression can be grouped with parentheses. The inner expression is evaluated first.
 
-### 3.5 String literals (date literals)
+### 3.8 String literals (date literals)
 
 ```
 StringLiteral = '"' chars '"' | "'" chars "'"
@@ -312,7 +337,23 @@ Compact and wordy parts can be mixed in a single duration:
 
 ## 6. Time Literals
 
-### 6.1 24-hour format
+### 6.1 Named time aliases
+
+| Alias | Value |
+|-------|-------|
+| `midnight` | 00:00:00 |
+| `midday` / `noon` | 12:00:00 |
+
+These can be used anywhere a time literal is expected, including after `at`:
+
+```
+tomorrow at midnight
+next friday noon
+```
+
+All three aliases are case-insensitive.
+
+### 6.2 24-hour format
 
 ```
 HH:MM
@@ -325,7 +366,7 @@ HH:MM:SS
 
 Examples: `14:30`, `09:00`, `23:59:59`.
 
-### 6.2 12-hour format
+### 6.3 12-hour format
 
 ```
 H:MMam/pm
@@ -445,6 +486,7 @@ When `defaultZone` is set, `now`, `today`, `tomorrow`, `yesterday`, weekday, and
 
 - Whitespace between tokens is optional (spaces only; no tabs or newlines in the grammar).
 - Keywords (`now`, `today`, `tomorrow`, `yesterday`, `in`, `to`, `into`, `as`, `at`, `next`, `last`, `until`, `since`, `start`, `end`, `using`, `prev`, `previous`) are case-sensitive.
+- `midnight`, `midday`, `noon` are case-insensitive.
 - Weekday names and month names are case-insensitive.
 - Timezone names are case-insensitive during resolution.
 - Meridiem (`am`/`pm`) is case-insensitive.

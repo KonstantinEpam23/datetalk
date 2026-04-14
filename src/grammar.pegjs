@@ -73,6 +73,8 @@ Primary "primary date/time value"
   / Today
   / Tomorrow
   / Yesterday
+  / Midnight
+  / Midday
   / WeekdayPrimary
   / MonthPrimary
   / Parens
@@ -92,6 +94,12 @@ Tomorrow
 
 Yesterday
   = "yesterday" !IdentChar { return node("Yesterday", {}); }
+
+Midnight
+  = "midnight"i !IdentChar { return node("Midnight", {}); }
+
+Midday
+  = ("midday"i / "noon"i) !IdentChar { return node("Midday", {}); }
 
 WeekdayPrimary
   = dir:("next"i / "last"i) !IdentChar _ w:WeekdayNameCI !IdentChar {
@@ -292,9 +300,18 @@ WordyDurationPart
  * ========================= */
 
 TimeLiteral "time"
-  = Time12
+  = TimeAlias
+  / Time12
   / Time12HourOnly
   / Time24
+
+TimeAlias
+  = "midnight"i !IdentChar {
+      return node("Time", { clock: 24, hh: 0, mm: 0, ss: 0 });
+    }
+  / ("midday"i / "noon"i) !IdentChar {
+      return node("Time", { clock: 24, hh: 12, mm: 0, ss: 0 });
+    }
 
 Time24
   = hh:TwoDigits ":" mm:TwoDigits ss:(":" TwoDigits)? {

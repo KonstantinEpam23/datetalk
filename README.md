@@ -10,6 +10,8 @@ See [intro.md](intro.md) for a friendly walkthrough, or [language-spec.md](langu
 now
 today + 2h 30m
 tomorrow at 10:30am
+midnight
+hours until midnight
 next Friday 15:00 in Tokyo
 hours until tomorrow 1am in Moscow
 now to New York as "HH:mm"
@@ -19,13 +21,13 @@ last march as "yyyy-MM-dd"
 
 ## Features
 
-- **Date primaries** — `now`, `today`, `tomorrow`, `yesterday`, weekday names (`friday`, `next monday`, `last wednesday`), month names (`april`, `next january`, `last december`)
+- **Date primaries** — `now`, `today`, `tomorrow`, `yesterday`, `midnight`, `midday`/`noon`, weekday names (`friday`, `next monday`, `last wednesday`), month names (`april`, `next january`, `last december`)
 - **Arithmetic** — `+ / -` with compact (`2h30m`) or wordy (`2 hours 30 minutes`) durations
 - **Time setting** — `at 10:30am`, `14:00`, `3pm` (the `at` keyword is optional)
 - **Timezone qualification (`in`)** — reinterprets the wall-clock time as being in the given zone: `tomorrow at 2pm in India`
 - **Timezone display (`to` / `into`)** — converts the result to another zone for display: `now to Tokyo`
 - **Formatting** — `as "yyyy-MM-dd HH:mm"` or `as weekday` (Luxon format tokens)
-- **Relative amounts** — `hours until tomorrow 1am in Moscow`, `days since yesterday`
+- **Relative amounts** — `hours until midnight`, `days since friday`, `months until january`. Bare weekday/month names and `midnight`/`midday` resolve contextually: `until` → next occurrence, `since` → previous occurrence
 - **Date literals** — `"2026-04-15"`, `"2026-04-15 14:30"`
 - **Parentheses** — `(now + 2h) to Tokyo`
 - **Timezone info in results** — the evaluation result includes metadata about which timezones were applied (conversion vs. representation)

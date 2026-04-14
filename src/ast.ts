@@ -20,6 +20,8 @@ export type Primary =
   | { type: "Today" }
   | { type: "Tomorrow" }
   | { type: "Yesterday" }
+  | { type: "Midnight" }
+  | { type: "Midday" }
   | { type: "WeekdayRef"; name: string; direction: "next" | "last" | "nearest" }
   | { type: "MonthRef"; name: string; direction: "next" | "last" | "nearest" }
   | { type: "Literal"; kind: "string"; value: string }

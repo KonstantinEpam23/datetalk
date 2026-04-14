@@ -38,12 +38,14 @@ For example, `hours until tomorrow 1am in Moscow`. Here, the right side is a nor
 
 ## The basics
 
-Start with a familiar word — `now`, `today`, `tomorrow`, `yesterday` — and then chain operations after it. Everything reads left to right:
+Start with a familiar word — `now`, `today`, `tomorrow`, `yesterday`, `midnight`, `midday` (or `noon`) — and then chain operations after it. Everything reads left to right:
 
 ```
 now + 2h 30m          → two and a half hours from now
 today - 5d            → five days ago
 tomorrow + 1mo        → same day next month
+midnight              → today at 00:00
+midday                → today at 12:00
 ```
 
 Durations can be compact (`2h30m`, `1d6h`) or spelled out (`2 hours 30 minutes`). You can mix units freely: `1y 2mo 3d`.
@@ -57,9 +59,11 @@ tomorrow at 10:30am
 next friday 15:00
 today at 6am
 yesterday 23:30
+tomorrow at midnight
+next monday noon
 ```
 
-Both 12-hour (`3:45pm`, `12am`) and 24-hour (`14:30`, `09:00`) formats work. The `at` keyword is optional — it's there for readability when you want it.
+Both 12-hour (`3:45pm`, `12am`) and 24-hour (`14:30`, `09:00`) formats work. You can also use the aliases `midnight` (00:00), `midday` or `noon` (12:00) as time values in the `at` position. The `at` keyword is optional — it's there for readability when you want it.
 
 ## Weekdays and months
 
@@ -122,10 +126,13 @@ Want to know how long until something, or how long since? Put the unit first:
 
 ```
 days until tomorrow              → 1
-hours until next friday 9am      → depends on when you ask
+hours until midnight             → hours until next midnight
+hours since midnight             → hours since last midnight
 days since yesterday             → 1
 months until "2026-12-31"        → months remaining in the year
 ```
+
+When you use bare names like `midnight`, `midday`, weekday names, or month names inside `until`/`since`, they resolve contextually: `until` picks the **next** occurrence, `since` picks the **previous** one. This avoids surprises — `hours until friday` always means the coming Friday, and `days since friday` always means the most recent one. Explicit `next`/`last` modifiers still work and override this behavior.
 
 These work with timezones too — `hours until tomorrow 1am in Moscow` accounts for Moscow time when computing the difference.
 

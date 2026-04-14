@@ -35,8 +35,8 @@ interface ExprResult {
   tz: TimezoneInfo;
 }
 
-function evalExpr(expr: DateTimeExpr, zone?: string): ExprResult {
-  let dt = evalPrimary(expr.head, zone);
+function evalExpr(expr: DateTimeExpr, zone?: string, relativeDir?: "until" | "since"): ExprResult {
+  let dt = evalPrimary(expr.head, zone, relativeDir);
   const tz: TimezoneInfo = {};
   for (const step of expr.steps) {
     if (step.type === "InTZ") {
@@ -51,7 +51,7 @@ function evalExpr(expr: DateTimeExpr, zone?: string): ExprResult {
 
 function evaluateRelativeAmount(expr: RelativeAmountExpr, opts: EvalOptions): Value {
   const base = nowInZone(opts.defaultZone);
-  const { dt: target, tz } = evalExpr(expr.target, opts.defaultZone);
+  const { dt: target, tz } = evalExpr(expr.target, opts.defaultZone, expr.direction);
   const [normalizedBase, normalizedTarget] = normalizeDiffEndpoints(base, target, expr.unit);
   const diffValue = diffDateTimes(normalizedBase, normalizedTarget, expr.unit, expr.direction);
 
@@ -62,7 +62,7 @@ function maybeTz(tz: TimezoneInfo): { tz: TimezoneInfo } | {} {
   return tz.conversion || tz.representation ? { tz } : {};
 }
 
-function evalPrimary(p: Primary, zone?: string): DateTime {
+function evalPrimary(p: Primary, zone?: string, relativeDir?: "until" | "since"): DateTime {
   switch (p.type) {
     case "Now":
       return nowInZone(zone);
@@ -76,11 +76,33 @@ function evalPrimary(p: Primary, zone?: string): DateTime {
     case "Yesterday":
       return nowInZone(zone).minus({ days: 1 }).startOf("day");
 
-    case "WeekdayRef":
-      return resolveWeekdayRef(p.name, p.direction, zone);
+    case "Midnight": {
+      const startOfDay = nowInZone(zone).startOf("day");
+      if (relativeDir === "until") return startOfDay.plus({ days: 1 });
+      return startOfDay; // "since" or standalone → today 00:00
+    }
 
-    case "MonthRef":
-      return resolveMonthRef(p.name, p.direction, zone);
+    case "Midday": {
+      const now = nowInZone(zone);
+      const todayNoon = now.startOf("day").set({ hour: 12 });
+      if (relativeDir === "until") return now >= todayNoon ? todayNoon.plus({ days: 1 }) : todayNoon;
+      if (relativeDir === "since") return now >= todayNoon ? todayNoon : todayNoon.minus({ days: 1 });
+      return todayNoon; // standalone
+    }
+
+    case "WeekdayRef": {
+      const dir = p.direction === "nearest" && relativeDir
+        ? (relativeDir === "until" ? "next" : "last")
+        : p.direction;
+      return resolveWeekdayRef(p.name, dir, zone);
+    }
+
+    case "MonthRef": {
+      const dir = p.direction === "nearest" && relativeDir
+        ? (relativeDir === "until" ? "next" : "last")
+        : p.direction;
+      return resolveMonthRef(p.name, dir, zone);
+    }
 
     case "Literal": {
       const parsed = parseDateString(p.value, zone);
